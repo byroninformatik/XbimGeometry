@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>6.0.0.0-dev</Version>
-    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+    <Version>6.1.801.900</Version>
+    <AssemblyVersion>6.1.801.900</AssemblyVersion>
     <Copyright>Copyright © XBIM Ltd</Copyright>
     <Company>Xbim Ltd.</Company>
     <Authors>Steve Lockley, Martin Cerny and XBIMTeam Contributors</Authors>

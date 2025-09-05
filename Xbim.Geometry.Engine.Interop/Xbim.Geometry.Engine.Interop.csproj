@@ -6,6 +6,8 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>Xbim.Geometry.Engine.Interop</PackageId>
 		<Platforms>AnyCPU;x64;x86</Platforms>
+        <!-- wg. Xbim.Geometry.Abstractions 6.2.363-develop -->
+        <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -122,8 +124,7 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.1.1" />
   </ItemGroup>
   
-  <ItemGroup>
-		
+  <ItemGroup>		
 		<PackageReference Include="Xbim.Geometry.Abstractions" Version="6.2.363-develop" />
       <PackageReference Include="Xbim.Essentials" Version="6.0.521" />
 	</ItemGroup>

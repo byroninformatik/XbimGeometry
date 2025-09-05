@@ -1,68 +1,65 @@
-Branch | Build Status  | MyGet | NuGet
------- | ------- | --- | --- |
-Master | [![Build Status](https://dev.azure.com/xBIMTeam/xBIMToolkit/_apis/build/status/xBimTeam.XbimGeometry?branchName=master)](https://dev.azure.com/xBIMTeam/xBIMToolkit/_build/latest?definitionId=3&branchName=master) | ![master](https://img.shields.io/myget/xbim-master/v/Xbim.Geometry.svg) | ![](https://img.shields.io/nuget/v/Xbim.Geometry.svg)
-Develop | [![Build Status](https://dev.azure.com/xBIMTeam/xBIMToolkit/_apis/build/status/xBimTeam.XbimGeometry?branchName=develop)](https://dev.azure.com/xBIMTeam/xBIMToolkit/_build/latest?definitionId=3&branchName=develop) | ![](https://img.shields.io/myget/xbim-develop/vpre/Xbim.Geometry.svg) | -
+# Fork of  xBimTeam / XbimGeometry 
+
+all further information see https://github.com/xBimTeam/XbimGeometry
+
+# Informationen zum Fork
+Ziel dieses Package ist es, dass Xbim.Geometry in .NET Core Projekten ohne Warnungen verwendet werden kann.
+Es wird hier nur der einfache Fall des Aktualisierens beschrieben (neue C# oder C++ Sourcen).
+Bei einer Veränderung der Projektstruktur müssen die Projektdateien neu aufgesetzt werden.
+
+## Voraussetzungen
+- Visual Studio 2022 _Desktopentwicklung mit C++_ (v143) installiert
 
 
-# XbimGeometry
-
-XbimGeometry is part of the [Xbim Toolkit](https://github.com/xBimTeam). 
-
-It contains the the Geometry Engine and Scene processing, which provide geometric and topological operations 
-to enable users to visualise models in 3D models, typically as a Tesselated scene or mesh.
-
-The native Geometry Engine is built around the open source [Open Cascade 7.7.0 library](https://www.opencascade.com/content/overview)
-which performs much of the boolean operations involve in generating 3D solids. 
-This technology is included under a licence which permits the use as part of a larger work, compatible with our open source CDDL licence.
-
-## Getting started
-
-Before using this library you should register the Geometry Engine with the xbim ServiceProvider.
-
+1. Den Fork aktualisieren
+    - den richtigen Branch als Startpunkt auswählen (z.B. _6.1.801_ auf Basis des Beispiels [CreateWexBIM](https://github.com/xBimTeam/XbimSamples/blob/master/CreateWexBIM/CreateWexBIM.csproj))
+	- einen eigenen Branch erzeugen (z.B. _byron/develop_) oder einen bestehenden Byron-Branch rebasen
+2. Sicherstellen, dass sich die Projektmappe kompilieren lässt
+    - C++ Projekt
+    - C# Projekte (nur Xbim.ModelGeometry.Scene und Xbim.Geometry.Engine.Interop)
+3. Sicherstellen, dass die Testcases grün sind.
+4. In den Projektdateien `Xbim.Geometry.Engine.Interop.csproj` und `Xbim.ModelGeometry.Scene.csproj` sicherstellen, dass ein .NET core Target Framework vorhanden ist
+5. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
+   Zeile 497 class `CreateContextOptions`
 ```csharp
-	// Either configure the internal Services
-	XbimServices.Current.ConfigureServices(opt => opt.AddXbimToolkit(conf => 
-		conf.AddGeometryServices()
-		));
-
-	// or configure your services and register the provider with xbim:
-	
-	services.AddXbimToolkit(conf => conf.AddGeometryServices());
-	// Once the DI container is built
-	XbimServices.Current.UseExternalServiceProvider(serviceProvider);
+        /// <summary>
+        /// RHE 04.09.2025 - options that are used when calculating the geometry in Xbim3DModelContext.CreateContext
+        /// </summary>
+        public class CreateContextOptions {
+            /// <summary>
+            /// This callback is used before openings are cut into the entity specified by the parameter
+            /// </summary>
+            public Func<IPersistEntity, bool> CutOpenings { get; set; } = (_) => true;
+        }
 ```
-
-
-## Compilation
-
-**Visual Studio 2022 is recommended.**
-Prior versions of Visual Studio are unlikely to work on this solution.
-
-The [free VS 2022 Community Edition](https://visualstudio.microsoft.com/downloads/) will be fine. 
-
-In order to compile this solution which includes C++ projects you'll need the following additional 
-components installed:
-
-- Visual C++ Core desktop features
-- VC++ 2022 v143 tools
-- Windows 10 SDK (10.0.17134.0) 
-
-The XBIM toolkit [uses the NuGet](https://www.nuget.org/packages/Xbim.Geometry/) for the management of our published packages.
-We have custom MyGet feeds for the *master* and *develop* branches of the solution which are automatically
-updated during our CI builds. The [nuget.config](nuget.config) file should automatically add these feeds for you.
-
-
-## Acknowledgements
-We'd like to acknowledge OpenCascade for the use of their library, which is permitted under clause 6 of [their
-Licence](https://www.opencascade.com/content/licensing). 
-
-The XbimTeam wishes to thank [JetBrains](https://www.jetbrains.com/) for supporting the XbimToolkit project 
-with free open source [Resharper](https://www.jetbrains.com/resharper/) licenses.
-
-Thanks also to Microsoft Azure DevOps for the use of [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/) 
-to automate our builds.
-
-## Getting Involved
-
-If you'd like to get involved and contribute to this project, please read the [CONTRIBUTING ](https://github.com/xBimTeam/XbimEssentials/blob/master/CONTRIBUTING.md)
-page or contact any member of the @xbimTeam
+9. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
+   Zeile 747  property `ContextOptions`
+```csharp
+        /// <summary>
+        /// RHE 04.09.2025 - these options are used when calculating the geometry in CreateContext
+        /// </summary>
+        public CreateContextOptions ContextOptions { get; private set; } = new CreateContextOptions();
+```
+10. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
+    Zeile 1052 Verwendung von ContextOptions
+```csharp
+                        // RHE 04.09.2025 - ContextOptions verwendet
+                        var entity = _model.Instances[elementLabel];
+                        if (this.ContextOptions.CutOpenings(entity)) 
+                        {
+```
+11. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
+    Zeile 1094 Verwendung von ContextOptions
+```csharp
+                        }
+                        else // RHE 22.11.2022 - ContextOptions verwendet
+                        { 
+                            LogInfo(entity, "Cutting openings was omitted");
+                        }
+```
+12. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
+    diverse Debug-Statements erneut entfernen. Suche in der bestehenden Version nach `RHE 04.09.2025` 
+13. Sicherstellen, dass das Testprojekt in [intern-XbimExtensions](https://github.com/byroninformatik/intern-XbimExtensions) mit dem eigenen Package bzw. den eigenen Projekten läuft.
+14. Neue Versionsnummern vergeben für die generierten nuget Pakete. Die Revisionsversion der Byron-Pakete beginnt jeweils bei 900. Beispiel: 6.1.801.900
+	- in `Directory.Build.props`
+15. Publizieren und Testen 
