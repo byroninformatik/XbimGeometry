@@ -29,8 +29,12 @@ if ($deployWhat -ne "") {
 	$deployPROD  = ($deployWhat -eq "y") -or ($deployWhat -eq "Y")
 }
 
-Write-Host "Personal GitHub Access Token (aka Api-Key) " -ForegroundColor Yellow -NoNewline
-$apiKey = Read-Host
+if ($deployPROD) {
+	Write-Host "Personal GitHub Access Token (aka Api-Key) " -ForegroundColor Yellow -NoNewline
+	$apiKey = Read-Host
+} else {
+	$apiKey = ""
+}
 
 Deploy-Project ".\Xbim.Geometry" $apiKey
 Deploy-Project ".\Xbim.Geometry.Engine.Interop" $apiKey
