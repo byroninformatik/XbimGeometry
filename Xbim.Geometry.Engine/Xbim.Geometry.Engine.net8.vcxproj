@@ -28,7 +28,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <OutputFolder>net6.0</OutputFolder>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <ProjectName>Xbim.Geometry.Engine.net6</ProjectName>
+    <ProjectName>Xbim.Geometry.Engine.net8</ProjectName>
     <WindowsTargetPlatformMinVersion>7.0</WindowsTargetPlatformMinVersion>
   </PropertyGroup>
   <PropertyGroup>
