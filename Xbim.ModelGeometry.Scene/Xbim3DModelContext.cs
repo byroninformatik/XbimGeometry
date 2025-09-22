@@ -530,6 +530,15 @@ namespace Xbim.ModelGeometry.Scene
             }
         }
 
+        /// <summary>
+        /// RHE 04.09.2025 - options that are used when calculating the geometry in Xbim3DModelContext.CreateContext
+        /// </summary>
+        public class CreateContextOptions {
+            /// <summary>
+            /// This callback is used before openings are cut into the entity specified by the parameter
+            /// </summary>
+            public Func<IPersistEntity, bool> CutOpenings { get; set; } = (_) => true;
+        }
         #endregion
 
         private readonly IfcRepresentationContextCollection _contexts;
@@ -716,6 +725,11 @@ namespace Xbim.ModelGeometry.Scene
         {
             get { return _model; }
         }
+
+        /// <summary>
+        /// RHE 04.09.2025 - these options are used when calculating the geometry in CreateContext
+        /// </summary>
+        public CreateContextOptions ContextOptions { get; private set; } = new CreateContextOptions();
 
         /// <summary>Creates a 3D graphical representation of the model using the Geometry Engine</summary>
         /// <returns></returns>
@@ -1034,29 +1048,37 @@ namespace Xbim.ModelGeometry.Scene
 
                     if (behaviour.HasFlag(MeshingBehaviourResult.PerformSubtractions) && openingAndProjectionOp.CutGeometries.Any())
                     {
-                        IXbimGeometryObjectSet nextGeom;
-                        try
+                        // RHE 04.09.2025 - ContextOptions verwendet
+                        var entity = _model.Instances[elementLabel];
+                        if (this.ContextOptions.CutOpenings(entity)) 
                         {
-
-                            nextGeom = elementGeom.Cut(openingAndProjectionOp.CutGeometries, _modelServices.MinimumGap, _logger);
-                            if (nextGeom.IsValid)
+                            IXbimGeometryObjectSet nextGeom;
+                            try
                             {
-                                if (nextGeom.First != null && nextGeom.First.IsValid)
-                                    elementGeom = nextGeom;
+
+                                nextGeom = elementGeom.Cut(openingAndProjectionOp.CutGeometries, _modelServices.MinimumGap, _logger);
+                                if (nextGeom.IsValid)
+                                {
+                                    if (nextGeom.First != null && nextGeom.First.IsValid)
+                                        elementGeom = nextGeom;
+                                    else
+                                        LogWarning(_model.Instances[elementLabel],
+                                            "Cutting openings has resulted in an empty shape");
+                                }
                                 else
                                     LogWarning(_model.Instances[elementLabel],
-                                        "Cutting openings has resulted in an empty shape");
+                                        "Cutting openings has failed. Openings have been ignored");
                             }
-                            else
-                                LogWarning(_model.Instances[elementLabel],
-                                    "Cutting openings has failed. Openings have been ignored");
-                        }
-                        catch (TimeoutException)
-                        {
-                            LogWarning(_model.Instances[elementLabel], "Cutting openings has failed. Openings have been ignored. Operation timed out after {0} seconds", BooleanTimeOutMilliSeconds / 1000);
+                            catch (TimeoutException)
+                            {
+                                LogWarning(_model.Instances[elementLabel], "Cutting openings has failed. Openings have been ignored. Operation timed out after {0} seconds", BooleanTimeOutMilliSeconds / 1000);
 
+                            }
                         }
-
+                        else // RHE 04.09.2025 - ContextOptions verwendet
+                        { 
+                            LogInfo(entity, "Cutting openings was omitted");
+                        }
 
                     }
 
@@ -1486,8 +1508,9 @@ namespace Xbim.ModelGeometry.Scene
                 Parallel.ForEach(contextHelper.ProductShapeIds, contextHelper.ParallelOptions, (shapeId) =>
                 {
                     using var _ = _logger.BeginScope("WriteShapeGeometry {entityLabel}", shapeId);
-                    Stopwatch productMeshingTime = new Stopwatch();
-                    productMeshingTime.Start();
+                    // RHE 04.09.2025 - nächste 2 Zeilen entfernt
+                    //Stopwatch productMeshingTime = new Stopwatch();
+                    //productMeshingTime.Start();
                     // Console.WriteLine($"{c} - {shapeId}");
                     // Interlocked.Increment(ref c);
                     if (processed.TryGetValue(shapeId, out byte b))
@@ -1623,11 +1646,12 @@ namespace Xbim.ModelGeometry.Scene
                             progDelegate(localPercentageParsed, "Creating Geometry");
                         }
                     }
-                    if (productMeshingTime.ElapsedMilliseconds > 20000)
-                    {
-                        LogWarning(shape, "Long meshing time of shape geometry: {0} ms.", productMeshingTime.ElapsedMilliseconds);
-                        Debug.WriteLine($"-\t{productMeshingTime.ElapsedMilliseconds,5}\tms {shape.GetType()}: #{shape.EntityLabel}");
-                    }
+                    // RHE 04.09.2025 - nächste 5 Zeilem entfernt
+                    //if (productMeshingTime.ElapsedMilliseconds > 20000)
+                    //{
+                    //    LogWarning(shape, "Long meshing time of shape geometry: {0} ms.", productMeshingTime.ElapsedMilliseconds);
+                    //    Debug.WriteLine($"-\t{productMeshingTime.ElapsedMilliseconds,5}\tms {shape.GetType()}: #{shape.EntityLabel}");
+                    //}
                     //  Interlocked.Decrement(ref c);
                     //  Console.WriteLine($"->{c} - {shapeId}");
                 }

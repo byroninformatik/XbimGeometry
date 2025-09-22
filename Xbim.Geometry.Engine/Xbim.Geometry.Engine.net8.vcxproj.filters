@@ -850,7 +850,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="app.rc">
+    <ResourceCompile Include="app.net8.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
