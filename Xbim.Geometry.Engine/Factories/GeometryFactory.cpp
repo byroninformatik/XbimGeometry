@@ -110,7 +110,7 @@ namespace Xbim
 			bool GeometryFactory::BuildPoint2d(IIfcCartesianPoint^ ifcPoint, gp_Pnt2d& pnt2d)
 			{
 
-				if ((int)ifcPoint->Dim == 2)
+				if ((int)ifcPoint->Dim > 1) // RHE 17.09.2025 - fix "== 2" => "> 1". See GeometryFactory::BuildAxis2Placement2d
 				{
 					pnt2d.SetXY(gp_XY(ifcPoint->Coordinates[0], ifcPoint->Coordinates[1]));
 					return true;
@@ -126,7 +126,7 @@ namespace Xbim
 
 			bool GeometryFactory::BuildDirection2d(IIfcDirection^ ifcDir, gp_Vec2d& dir2d)
 			{
-				if ((int)ifcDir->Dim != 2) return false;
+				if ((int)ifcDir->Dim < 2) return false; // RHE 17.09.2025 - fix "!= 2" => "< 2". See GeometryFactory::BuildAxis2Placement2d
 				return EXEC_NATIVE->BuildDirection2d(ifcDir->DirectionRatios[0], ifcDir->DirectionRatios[1], dir2d);
 			}
 
@@ -212,7 +212,7 @@ namespace Xbim
 					return false;
 				}
 				gp_Pnt2d loc;
-				if (!BuildPoint2d(axis2d->Location, loc))
+				if (!BuildPoint2d(axis2d->Location, loc)) // RHE 17.09.2025 - fix BuildPoint2d 
 				{
 					LogError("A 2D point cannot be built correctly from a 3D definition");
 					return false;
@@ -649,7 +649,7 @@ namespace Xbim
 				{
 					gp_Ax2 ax2;
 					if (!BuildAxis2Placement3d(axis3d, ax2))
-						throw RaiseGeometryFactoryException("Error badly defined axis", axis2);
+						throw RaiseGeometryFactoryException("Error badly defined axis (1) in BuildAxis2PlacementLocation", axis2); // RHE 17.09.2025 - more info logged
 					gp_Trsf transform;
 					gp_Ax3 ax3(ax2);
 					transform.SetTransformation(ax3, gp_Ax3());
@@ -660,7 +660,7 @@ namespace Xbim
 				{
 					gp_Ax22d ax2d;
 					if (!BuildAxis2Placement2d(axis2d, ax2d))
-						throw RaiseGeometryFactoryException("Error badly defined axis", axis2);
+						throw RaiseGeometryFactoryException("Error badly defined axis (2) in BuildAxis2PlacementLocation", axis2); // RHE 17.09.2025 - more info logged
 					gp_Trsf transform;
 					gp_Pnt2d p2d = ax2d.Location();
 					gp_Ax3 ax3(gp_Pnt(p2d.X(), p2d.Y(), 0.), gp::DZ(), gp_Dir(ax2d.XDirection().X(), ax2d.XDirection().Y(), 0.));

@@ -39,8 +39,8 @@ Currently this library supports IFC2x2, IFC2x3, IFC4 Addendum 2 TC1 and IFC4.3 A
     <ProjectReference Include="..\Xbim.Tessellator\Xbim.Tessellator.csproj" />
   </ItemGroup>
 
-  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+    <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
-  <Target Name="Compile" />
-  <Target Name="CopyFilesToOutputDirectory" />
+    <Target Name="Compile" />
+    <Target Name="CopyFilesToOutputDirectory" />
 </Project>
