@@ -1,6 +1,7 @@
 # Fork of  xBimTeam / XbimGeometry 
 
-all further information see https://github.com/xBimTeam/XbimGeometry
+all further information see https://github.com/xBimTeam/XbimGeometry  
+and [issue #552](https://github.com/xBimTeam/XbimGeometry/issues/552)  
 
 # Informationen zum Fork
 Ziel dieses Package ist es, dass Xbim.Geometry in .NET Core Projekten ohne Warnungen verwendet werden kann.
@@ -59,7 +60,35 @@ Bei einer Veränderung der Projektstruktur müssen die Projektdateien neu aufges
 ```
 12. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
     diverse Debug-Statements erneut entfernen. Suche in der bestehenden Version nach `RHE 04.09.2025` 
-13. Sicherstellen, dass das Testprojekt in [intern-XbimExtensions](https://github.com/byroninformatik/intern-XbimExtensions) mit dem eigenen Package bzw. den eigenen Projekten läuft.
-14. Neue Versionsnummern vergeben für die generierten nuget Pakete. Die Revisionsversion der Byron-Pakete beginnt jeweils bei 900. Beispiel: 6.1.801.900
+13. Korrekturen in der Xbim.Geometry.Engine - vgl. [Issue #552](https://github.com/xBimTeam/XbimGeometry/issues/552)  
+Änderungen in `Xbim.Geometry.Engine/Factories/GeometryFactory.cpp` wieder vornehmen  
+Zeile 110
+```cpp
+			bool GeometryFactory::BuildPoint2d(IIfcCartesianPoint^ ifcPoint, gp_Pnt2d& pnt2d)
+			{
+
+				if ((int)ifcPoint->Dim > 1) // RHE 17.09.2025 - fix "== 2" => "> 1"
+				{
+					pnt2d.SetXY(gp_XY(ifcPoint->Coordinates[0], ifcPoint->Coordinates[1]));
+					return true;
+				}
+				else
+					return false;
+			}
+```
+Zeile 127
+```cpp
+			bool GeometryFactory::BuildDirection2d(IIfcDirection^ ifcDir, gp_Vec2d& dir2d)
+			{
+				if ((int)ifcDir->Dim < 2) return false; // RHE 17.09.2025 - fix "!= 2" => "< 2"
+				return EXEC_NATIVE->BuildDirection2d(ifcDir->DirectionRatios[0], ifcDir->DirectionRatios[1], dir2d);
+			}
+
+```
+14. Alle Vorkommen von `std::mutex` durch `std::shared_mutex` ersetzen. Dies sind aktuell die Dateien
+    - _Cache.h_
+    - _WireFactory.h_
+15. Sicherstellen, dass das Testprojekt in [intern-XbimExtensions](https://github.com/byroninformatik/intern-XbimExtensions) mit dem eigenen Package bzw. den eigenen Projekten läuft.
+16. Neue Versionsnummern vergeben für die generierten nuget Pakete. Die Revisionsversion der Byron-Pakete beginnt jeweils bei 900. Beispiel: 6.1.801.900
 	- in `Directory.Build.props`
-15. Publizieren und Testen 
+17. Publizieren und Testen 
