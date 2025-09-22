@@ -39,6 +39,7 @@ if ($deployPROD) {
 Deploy-Project ".\Xbim.Geometry" $apiKey
 Deploy-Project ".\Xbim.Geometry.Engine.Interop" $apiKey
 Deploy-Project ".\Xbim.ModelGeometry.Scene" $apiKey
+Deploy-Project ".\Xbim.Tessellator" $apiKey
 
 Write-Host "fertig - bitte Taste drücken..."
 $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
