@@ -36,6 +36,7 @@ if ($deployPROD) {
 	$apiKey = ""
 }
 
+Deploy-Project ".\Xbim.Geometry.Abstractions" $apiKey
 Deploy-Project ".\Xbim.Geometry" $apiKey
 Deploy-Project ".\Xbim.Geometry.Engine.Interop" $apiKey
 Deploy-Project ".\Xbim.ModelGeometry.Scene" $apiKey
