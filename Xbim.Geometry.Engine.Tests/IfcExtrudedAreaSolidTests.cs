@@ -61,7 +61,7 @@ namespace Xbim.Geometry.Engine.Tests
                 er.Entity.Should().NotBeNull();
 
                 var v5Error = Assert.Throws<XbimGeometryFactoryException>(() => geomEngine.CreateSolid(er.Entity, _logger));
-                v5Error.Message.Should().Be("Error badly defined axis");
+                v5Error.Message.Should().Contain("Error badly defined axis"); // RHE 01.12.2025 Should().Be() => Should().Contain()
             }
 
         }
