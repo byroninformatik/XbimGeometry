@@ -529,16 +529,6 @@ namespace Xbim.ModelGeometry.Scene
                 GC.SuppressFinalize(this);
             }
         }
-
-        /// <summary>
-        /// RHE 04.09.2025 - options that are used when calculating the geometry in Xbim3DModelContext.CreateContext
-        /// </summary>
-        public class CreateContextOptions {
-            /// <summary>
-            /// This callback is used before openings are cut into the entity specified by the parameter
-            /// </summary>
-            public Func<IPersistEntity, bool> CutOpenings { get; set; } = (_) => true;
-        }
         #endregion
 
         private readonly IfcRepresentationContextCollection _contexts;
@@ -725,11 +715,6 @@ namespace Xbim.ModelGeometry.Scene
         {
             get { return _model; }
         }
-
-        /// <summary>
-        /// RHE 04.09.2025 - these options are used when calculating the geometry in CreateContext
-        /// </summary>
-        public CreateContextOptions ContextOptions { get; private set; } = new CreateContextOptions();
 
         /// <summary>Creates a 3D graphical representation of the model using the Geometry Engine</summary>
         /// <returns></returns>
@@ -938,55 +923,60 @@ namespace Xbim.ModelGeometry.Scene
                 int styleId = 0; //take the style of any part of the main shape
                 var element = elementToFeatureGroup.Key;
                 using var _ = _logger.BeginScope("WriteProductsWithFeatures {entityLabel}", element.EntityLabel);
-                // _logger.LogTrace("Processing features for {0}", element.EntityLabel);
+                try {
+                    // _logger.LogTrace("Processing features for {0}", element.EntityLabel);
 
-                // here is where the feature's geometry are calculated
-                //
-                var elementShapes = WriteProductShape(contextHelper, element, false, txn);
-                var productShapes = new List<XbimShapeInstance>();
-                foreach (var elemShape in elementShapes)
-                {
-                    if (!allShapeIds.TryAdd(elemShape.ShapeGeometryLabel, true))
-                        shapeIdsUsedMoreThanOnce.TryAdd(elemShape.ShapeGeometryLabel, true);
-                    productShapes.Add(elemShape);
-                    context = elemShape.RepresentationContext;
-                    if (elemShape.StyleLabel > 0)
-                        styleId = elemShape.StyleLabel;
-                }
-
-                if (productShapes.Count == 0)
-                {
-                    processed.TryAdd(element.EntityLabel, 0);
-                }
-                if (productShapes.Count > 0)
-                {
-                    var cutTools = new List<XbimShapeInstance>();
-                    var projectTools = new List<XbimShapeInstance>();
-                    foreach (var feature in elementToFeatureGroup)
+                    // here is where the feature's geometry are calculated
+                    //
+                    var elementShapes = WriteProductShape(contextHelper, element, false, txn);
+                    var productShapes = new List<XbimShapeInstance>();
+                    foreach (var elemShape in elementShapes) 
                     {
-                        // here is where the feature's geometry are calculated
-                        //
-                        var isCut = feature is IIfcFeatureElementSubtraction;
-                        var featureShapes = WriteProductShape(contextHelper, feature, false, txn);
-
-                        foreach (var featureShape in featureShapes)
-                        {
-                            if (!allShapeIds.TryAdd(featureShape.ShapeGeometryLabel, true))
-                                shapeIdsUsedMoreThanOnce.TryAdd(featureShape.ShapeGeometryLabel, true);
-                            // Seems to break all openings. Reversed 1/9/23. Se GH #444.  One for SRL 
-                            //if (featureShape.RepresentationType != XbimGeometryRepresentationType.OpeningsAndAdditionsOnly) //skip if the geometry of the feature is for reference only
-                            //{
-                            if (isCut)
-                                cutTools.Add(featureShape);
-                            else
-                                projectTools.Add(featureShape);
-                            //}
-                        }
-                        processed.TryAdd(feature.EntityLabel, 0);
-
+                        if (!allShapeIds.TryAdd(elemShape.ShapeGeometryLabel, true))
+                            shapeIdsUsedMoreThanOnce.TryAdd(elemShape.ShapeGeometryLabel, true);
+                        productShapes.Add(elemShape);
+                        context = elemShape.RepresentationContext;
+                        if (elemShape.StyleLabel > 0)
+                            styleId = elemShape.StyleLabel;
                     }
-                    var boolOp = new XbimProductBooleanInfo(this, contextHelper, Engine, Model, shapeIdsUsedMoreThanOnce, productShapes, cutTools, projectTools, context, styleId);
-                    openingAndProjectionOps.Add(boolOp);
+
+                    if (productShapes.Count == 0) 
+                    {
+                        processed.TryAdd(element.EntityLabel, 0);
+                    }
+                    if (productShapes.Count > 0) 
+                    {
+                        var cutTools = new List<XbimShapeInstance>();
+                        var projectTools = new List<XbimShapeInstance>();
+                        foreach (var feature in elementToFeatureGroup) 
+                        {
+                            // here is where the feature's geometry are calculated
+                            //
+                            var isCut = feature is IIfcFeatureElementSubtraction;
+                            var featureShapes = WriteProductShape(contextHelper, feature, false, txn);
+
+                            foreach (var featureShape in featureShapes) 
+                            {
+                                if (!allShapeIds.TryAdd(featureShape.ShapeGeometryLabel, true))
+                                    shapeIdsUsedMoreThanOnce.TryAdd(featureShape.ShapeGeometryLabel, true);
+                                // Seems to break all openings. Reversed 1/9/23. Se GH #444.  One for SRL 
+                                //if (featureShape.RepresentationType != XbimGeometryRepresentationType.OpeningsAndAdditionsOnly) //skip if the geometry of the feature is for reference only
+                                //{
+                                if (isCut)
+                                    cutTools.Add(featureShape);
+                                else
+                                    projectTools.Add(featureShape);
+                                //}
+                            }
+                            processed.TryAdd(feature.EntityLabel, 0);
+
+                        }
+                        var boolOp = new XbimProductBooleanInfo(this, contextHelper, Engine, Model, shapeIdsUsedMoreThanOnce, productShapes, cutTools, projectTools, context, styleId);
+                        openingAndProjectionOps.Add(boolOp);
+                    }
+                } catch {
+                    _logger.LogError("Intercepted exception calculating geometry of {entity}", element);
+                    throw;
                 }
             });
 
@@ -1050,36 +1040,28 @@ namespace Xbim.ModelGeometry.Scene
                     {
                         // RHE 04.09.2025 - ContextOptions verwendet
                         var entity = _model.Instances[elementLabel];
-                        if (this.ContextOptions.CutOpenings(entity)) 
+                        IXbimGeometryObjectSet nextGeom;
+                        try
                         {
-                            IXbimGeometryObjectSet nextGeom;
-                            try
-                            {
 
-                                nextGeom = elementGeom.Cut(openingAndProjectionOp.CutGeometries, _modelServices.MinimumGap, _logger);
-                                if (nextGeom.IsValid)
-                                {
-                                    if (nextGeom.First != null && nextGeom.First.IsValid)
-                                        elementGeom = nextGeom;
-                                    else
-                                        LogWarning(_model.Instances[elementLabel],
-                                            "Cutting openings has resulted in an empty shape");
-                                }
+                            nextGeom = elementGeom.Cut(openingAndProjectionOp.CutGeometries, _modelServices.MinimumGap, _logger);
+                            if (nextGeom.IsValid)
+                            {
+                                if (nextGeom.First != null && nextGeom.First.IsValid)
+                                    elementGeom = nextGeom;
                                 else
                                     LogWarning(_model.Instances[elementLabel],
-                                        "Cutting openings has failed. Openings have been ignored");
+                                        "Cutting openings has resulted in an empty shape");
                             }
-                            catch (TimeoutException)
-                            {
-                                LogWarning(_model.Instances[elementLabel], "Cutting openings has failed. Openings have been ignored. Operation timed out after {0} seconds", BooleanTimeOutMilliSeconds / 1000);
-
-                            }
+                            else
+                                LogWarning(_model.Instances[elementLabel],
+                                    "Cutting openings has failed. Openings have been ignored");
                         }
-                        else // RHE 04.09.2025 - ContextOptions verwendet
-                        { 
-                            LogInfo(entity, "Cutting openings was omitted");
-                        }
+                        catch (TimeoutException)
+                        {
+                            LogWarning(_model.Instances[elementLabel], "Cutting openings has failed. Openings have been ignored. Operation timed out after {0} seconds", BooleanTimeOutMilliSeconds / 1000);
 
+                        }
                     }
 
                     // now add to the DB     

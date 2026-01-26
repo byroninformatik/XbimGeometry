@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>6.3.880.900</Version>
-    <AssemblyVersion>6.3.880.900</AssemblyVersion>
+    <Version>6.3.880.901</Version>
+    <AssemblyVersion>6.3.880.901</AssemblyVersion>
     <Copyright>Copyright © XBIM Ltd</Copyright>
     <Company>Xbim Ltd.</Company>
     <Authors>Steve Lockley, Martin Cerny and XBIMTeam Contributors</Authors>

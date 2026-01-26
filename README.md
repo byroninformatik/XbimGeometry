@@ -21,46 +21,21 @@ Bei einer Veränderung der Projektstruktur müssen die Projektdateien neu aufges
 3. Sicherstellen, dass die Testcases grün sind.
 4. In den Projektdateien `Xbim.Geometry.Engine.Interop.csproj` und `Xbim.ModelGeometry.Scene.csproj` sicherstellen, dass ein .NET core Target Framework vorhanden ist
 5. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
-   Zeile 497 class `CreateContextOptions`
+Zeile 926 bis 975
 ```csharp
-        /// <summary>
-        /// RHE 04.09.2025 - options that are used when calculating the geometry in Xbim3DModelContext.CreateContext
-        /// </summary>
-        public class CreateContextOptions {
-            /// <summary>
-            /// This callback is used before openings are cut into the entity specified by the parameter
-            /// </summary>
-            public Func<IPersistEntity, bool> CutOpenings { get; set; } = (_) => true;
-        }
+                try {
+                    ...
+                        var boolOp = new XbimProductBooleanInfo(this, contextHelper, Engine, Model, shapeIdsUsedMoreThanOnce, productShapes, cutTools, projectTools, context, styleId);
+                        openingAndProjectionOps.Add(boolOp);
+                    }
+                } catch {
+                    _logger.LogError("Intercepted exception calculating geometry of {entity}", element);
+                    throw;
+                }
 ```
-9. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
-   Zeile 747  property `ContextOptions`
-```csharp
-        /// <summary>
-        /// RHE 04.09.2025 - these options are used when calculating the geometry in CreateContext
-        /// </summary>
-        public CreateContextOptions ContextOptions { get; private set; } = new CreateContextOptions();
-```
-10. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
-    Zeile 1052 Verwendung von ContextOptions
-```csharp
-                        // RHE 04.09.2025 - ContextOptions verwendet
-                        var entity = _model.Instances[elementLabel];
-                        if (this.ContextOptions.CutOpenings(entity)) 
-                        {
-```
-11. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
-    Zeile 1094 Verwendung von ContextOptions
-```csharp
-                        }
-                        else // RHE 22.11.2022 - ContextOptions verwendet
-                        { 
-                            LogInfo(entity, "Cutting openings was omitted");
-                        }
-```
-12. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
+5. Änderungen in `Xbim.ModelGeometry.Scene/Xbim3DModelContext.cs` wieder vornehmen  
     diverse Debug-Statements erneut entfernen. Suche in der bestehenden Version nach `RHE 04.09.2025` 
-13. Korrekturen in der Xbim.Geometry.Engine - vgl. [Issue #552](https://github.com/xBimTeam/XbimGeometry/issues/552)  
+6. Korrekturen in der Xbim.Geometry.Engine - vgl. [Issue #552](https://github.com/xBimTeam/XbimGeometry/issues/552)  
 Änderungen in `Xbim.Geometry.Engine/Factories/GeometryFactory.cpp` wieder vornehmen  
 Zeile 110
 ```cpp
@@ -85,10 +60,10 @@ Zeile 127
 			}
 
 ```
-14. Alle Vorkommen von `std::mutex` durch `std::shared_mutex` ersetzen. Dies sind aktuell die Dateien
+7. Alle Vorkommen von `std::mutex` durch `std::shared_mutex` ersetzen. Dies sind aktuell die Dateien
     - _Cache.h_
     - _WireFactory.h_
-15. Sicherstellen, dass das Testprojekt in [intern-XbimExtensions](https://github.com/byroninformatik/intern-XbimExtensions) mit dem eigenen Package bzw. den eigenen Projekten läuft.
-16. Neue Versionsnummern vergeben für die generierten nuget Pakete. Die Revisionsversion der Byron-Pakete beginnt jeweils bei 900. Beispiel: 6.1.801.900
+8. Sicherstellen, dass das Testprojekt in [intern-XbimExtensions](https://github.com/byroninformatik/intern-XbimExtensions) mit dem eigenen Package bzw. den eigenen Projekten läuft.
+9. Neue Versionsnummern vergeben für die generierten nuget Pakete. Die Revisionsversion der Byron-Pakete beginnt jeweils bei 900. Beispiel: 6.1.801.900
 	- in `Directory.Build.props`
-17. Publizieren und Testen 
+10. Publizieren und Testen 
