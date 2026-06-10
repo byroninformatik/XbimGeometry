@@ -1038,7 +1038,6 @@ namespace Xbim.ModelGeometry.Scene
 
                     if (behaviour.HasFlag(MeshingBehaviourResult.PerformSubtractions) && openingAndProjectionOp.CutGeometries.Any())
                     {
-                        // RHE 04.09.2025 - ContextOptions verwendet
                         var entity = _model.Instances[elementLabel];
                         IXbimGeometryObjectSet nextGeom;
                         try
