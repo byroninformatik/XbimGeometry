@@ -13,8 +13,9 @@ Bei einer Veränderung der Projektstruktur müssen die Projektdateien neu aufges
 
 
 1. Den Fork aktualisieren
-    - den richtigen Branch als Startpunkt auswählen (z.B. _6.1.801_ auf Basis des Beispiels [CreateWexBIM](https://github.com/xBimTeam/XbimSamples/blob/master/CreateWexBIM/CreateWexBIM.csproj))
-	- einen eigenen Branch erzeugen (z.B. _byron/develop_) oder einen bestehenden Byron-Branch rebasen
+    - auf Github den richtigen Branch als Startpunkt auswählen (i.e. _feature/netcore_)
+    - Sync Fork drücken
+	- einen eigenen Branch erzeugen (i.e. _byron/master_) oder einen bestehenden Byron-Branch rebasen
 2. Sicherstellen, dass sich die Projektmappe kompilieren lässt
     - C++ Projekt
     - C# Projekte (nur Xbim.ModelGeometry.Scene und Xbim.Geometry.Engine.Interop)
